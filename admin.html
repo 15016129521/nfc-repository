@@ -237,7 +237,26 @@ const DEFAULT_CONFIG = {
         modules:[{id:'header',visible:true,order:1},{id:'video',visible:false,order:2},{id:'platforms',visible:true,order:3},{id:'follow',visible:true,order:4},{id:'collect',visible:true,order:5},{id:'activities',visible:true,order:6},{id:'contact',visible:true,order:7}]}
 };
 
-let config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let config = (function() {
+    let cfg = localStorage.getItem(CONFIG_KEY);
+    if (!cfg) {
+        const def = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        def.storeId = STORE_ID;
+        def.storeName = '痛疯精酿';
+        def.adminPassword = 'beer123';
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(def));
+        localStorage.setItem('storeConfig', JSON.stringify(def));
+        return def;
+    }
+    try {
+        return JSON.parse(cfg);
+    } catch(e) {
+        const def = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+        def.storeId = STORE_ID;
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(def));
+        return def;
+    }
+})();
 
 function saveConfig() {
     config.storeId = STORE_ID;
