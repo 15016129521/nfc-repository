@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商家运营中心 · NFC拓客</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --sidebar-bg: #1a1a2e;
+            --sidebar-text: #8899a6;
+            --sidebar-active: #d4943a;
+            --card: #ffffff;
+            --amber: #d4943a;
+            --amber-light: #f0c878;
+            --text: #1a1a1a;
+            --muted: #888888;
+            --border: #e0e0e0;
+            --danger: #c41e3a;
+            --green: #4caf84;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg); color: var(--text);
+            height: 100vh; display: flex; overflow: hidden;
+        }
+        .sidebar {
+            width: 240px; background: var(--sidebar-bg);
+            display: flex; flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3); flex-shrink: 0; z-index: 10;
+        }
+        .sidebar-header {
+            padding: 24px 16px; text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-header .logo { font-size: 20px; font-weight: 800; color: var(--amber-light); }
+        .sidebar-header .sub { font-size: 11px; color: #667; margin-top: 4px; }
+        .sidebar-nav { flex:1; overflow-y:auto; padding: 12px 0; }
+        .nav-section { padding: 16px 20px 8px; font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px; font-size: 14px; color: var(--sidebar-text);
+            cursor: pointer; border-left: 3px solid transparent; transition: 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.04); color: #ddd; }
+        .nav-item.active { background: rgba(212,148,58,0.12); color: var(--amber-light); border-left-color: var(--amber); font-weight:600; }
+        .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        .main { flex:1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar {
+            background: #fff; padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar .breadcrumb { font-size: 14px; color: var(--muted); }
+        .preview-link { font-size: 12px; color: #4285f4; cursor: pointer; text-decoration: underline; }
+        .content-area { flex:1; padding: 24px; overflow-y: auto; background: var(--bg); }
+        .section-card { background: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow); }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 14px; background: #fafafa; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--amber); background: #fff; }
+        .btn {
+            background: var(--amber); color: #fff; border: none;
+            padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: var(--danger); }
+        .btn-outline { background: #fff; border: 1px solid var(--amber); color: var(--amber); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+        .stat-card {
+            background: #fff; border-radius: var(--radius); padding: 20px;
+            box-shadow: var(--shadow); display: flex; flex-direction: column;
+            border-left: 4px solid var(--amber);
+        }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--amber); }
+        .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .table th { font-weight: 600; color: #555; background: #fafafa; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+        .toggle { width: 44px; height: 24px; background: #ccc; border-radius: 12px; position: relative; cursor: pointer; transition: 0.2s; }
+        .toggle.active { background: var(--amber); }
+        .toggle::after { content: ''; width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.2s; }
+        .toggle.active::after { left: 22px; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #333; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 9999; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- ========== 密码验证层 ========== -->
+<div id="authOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:99999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:30px;text-align:center;max-width:380px;width:90%;">
+        <div style="font-size:48px;margin-bottom:16px;">🔐</div>
+        <h2 style="margin-bottom:8px;">商家后台</h2>
+        <p style="color:#888;margin-bottom:20px;" id="authStoreName">请输入密码</p>
+        <input type="password" id="authPasswordInput" placeholder="请输入访问密码" style="width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:8px;font-size:16px;text-align:center;margin-bottom:16px;">
+        <button class="btn" onclick="verifyPassword()" style="width:100%;">验证进入</button>
+        <p style="color:#c41e3a;margin-top:12px;display:none;" id="authError">❌ 密码错误</p>
+        <p style="color:#888;font-size:12px;margin-top:16px;">请联系代理获取后台密码</p>
+    </div>
+</div>
+
+<!-- ========== 侧边栏 ========== -->
+<div class="sidebar" id="mainSidebar" style="display:none;">
+    <div class="sidebar-header">
+        <div class="logo">🍺 商家中心</div>
+        <div class="sub">NFC智能拓客</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">数据</div>
+        <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span>数据看板</div>
+        <div class="nav-item" data-page="orders"><span class="icon">📋</span>订单管理</div>
+        <div class="nav-item" data-page="verify"><span class="icon">🎟️</span>优惠核销</div>
+        <div class="nav-section">装修</div>
+        <div class="nav-item" data-page="layout"><span class="icon">🎨</span>页面装修</div>
+        <div class="nav-item" data-page="basic"><span class="icon">🏪</span>门店信息</div>
+        <div class="nav-item" data-page="platforms"><span class="icon">📱</span>平台管理</div>
+        <div class="nav-section">内容</div>
+        <div class="nav-item" data-page="menu"><span class="icon">🍽️</span>菜单管理</div>
+        <div class="nav-item" data-page="activities"><span class="icon">🎫</span>活动管理</div>
+        <div class="nav-item" data-page="collect"><span class="icon">⭐</span>收藏打卡</div>
+        <div class="nav-item" data-page="follow"><span class="icon">➕</span>关注矩阵</div>
+        <div class="nav-item" data-page="lottery"><span class="icon">🎰</span>抽奖设置</div>
+        <div class="nav-section">AI工具</div>
+        <div class="nav-item" data-page="video"><span class="icon">🎬</span>AI视频</div>
+        <div class="nav-item" data-page="poster"><span class="icon">🎨</span>AI海报</div>
+        <div class="nav-section">发布</div>
+        <div class="nav-item" data-page="auth"><span class="icon">🔗</span>账号授权</div>
+        <div class="nav-item" data-page="publish"><span class="icon">📤</span>一键发布</div>
+        <div class="nav-section">财务</div>
+        <div class="nav-item" data-page="finance"><span class="icon">💰</span>财务中心</div>
+        <div class="nav-item" data-page="renew"><span class="icon">🔄</span>续费管理</div>
+        <div class="nav-item" data-page="profile"><span class="icon">👤</span>个人中心</div>
+    </nav>
+</div>
+
+<!-- ========== 主区域 ========== -->
+<div class="main" id="mainContent" style="display:none;">
+    <div class="topbar">
+        <div class="breadcrumb" id="breadcrumb">📊 数据看板</div>
+        <div>
+            <span style="color:var(--muted);margin-right:16px;">门店ID: <b id="topbarStoreId"></b></span>
+            <span class="preview-link" onclick="previewNFC()">🔗 预览NFC页面</span>
+        </div>
+    </div>
+    <div class="content-area" id="contentArea"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ====================== 密码验证（admin.html 专属） ======================
+const urlParams = new URLSearchParams(window.location.search);
+const STORE_ID = urlParams.get('id') || 'tongfeng001';
+const CONFIG_KEY = 'storeConfig_' + STORE_ID;
+const AUTH_KEY = 'admin_auth_' + STORE_ID;
+
+// 检查是否已验证
+const authData = JSON.parse(localStorage.getItem(AUTH_KEY) || '{}');
+const now = Date.now();
+
+if (authData.authenticated && (now - authData.time < 86400000)) {
+    // 24小时内已验证，直接进入
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('mainSidebar').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'flex';
+    initApp();
+} else {
+    // 显示门店名
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    document.getElementById('authStoreName').textContent = '门店：' + (cfg.storeName || STORE_ID);
+}
+
+window.verifyPassword = function() {
+    const input = document.getElementById('authPasswordInput').value;
+    const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    const correctPassword = cfg.adminPassword || 'admin123';
+
+    if (input === correctPassword) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ authenticated: true, time: Date.now() }));
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('mainSidebar').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'flex';
+        initApp();
+    } else {
+        document.getElementById('authError').style.display = 'block';
+        document.getElementById('authPasswordInput').value = '';
+    }
+};
+
+// 回车键提交
+document.getElementById('authPasswordInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') verifyPassword();
+});
+
+// ====================== 配置管理 ======================
+const DEFAULT_CONFIG = {
+    storeName:'痛疯精酿', storeId:STORE_ID, address:'浙江省杭州市临安区花间里',
+    phone:'18258222619', wechatId:'Wjl1715514794', wifiSSID:'TongFeng-WiFi', wifiPassword:'88888888',
+    brandIcon:'🍺', brandTagline:'TONG FENG CRAFT BEER', brandLabels:['精酿鲜啤','临安花间里','微醺据点'],
+    platforms:{
+        xiaohongshu:{enabled:true,name:'小红书',icon:'红',scheme:'xhsdiscover://post',desc:'发笔记种草'},
+        dianping:{enabled:true,name:'大众点评',icon:'点',scheme:'dianping://ugcreview?refertype=0',desc:'写好评'},
+        meituan:{enabled:true,name:'美团',icon:'美',scheme:'meituan://',desc:'写评价'},
+        douyin:{enabled:true,name:'抖音',icon:'抖',scheme:'snssdk1128://',desc:'发视频/评价'},
+        gaode:{enabled:true,name:'高德地图',icon:'高',scheme:'iosamap://',desc:'写评价'},
+        ctrip:{enabled:true,name:'携程',icon:'携',scheme:'ctrip://',desc:'写评价'},
+        kuaishou:{enabled:true,name:'快手',icon:'快',scheme:'kwai://',desc:'发视频'},
+        wechat_moments:{enabled:true,name:'朋友圈',icon:'微',scheme:'weixin://',desc:'分享打卡'}
+    },
+    menu:[
+        {id:1,name:'龙井小麦',desc:'清爽茶香，回甘悠长',price:38,emoji:'🍵',category:'beer',enabled:true},
+        {id:2,name:'痛疯浑浊IPA',desc:'热带水果香气炸裂',price:48,emoji:'🍊',category:'beer',enabled:true},
+        {id:3,name:'炸鸡拼盘',desc:'酥脆多汁',price:28,emoji:'🍗',category:'snack',enabled:true},
+        {id:4,name:'品鉴套餐',desc:'3款精酿+小吃',price:88,emoji:'🍱',category:'set',enabled:true}
+    ],
+    activities:[], collectPlatforms:['dianping','douyin','gaode','xiaohongshu'],
+    followAccounts:[], videoUrl:'',
+    lottery:{enabled:true,prizes:[{name:'精酿畅饮券',desc:'任选1杯',emoji:'🍺',weight:10,codePrefix:'VIP'},{name:'小吃拼盘',desc:'免费小吃',emoji:'🍟',weight:20,codePrefix:'SNACK'}]},
+    adminPassword:'admin123',
+    layout:{themeColor:'#d4943a',themeLight:'#f0c878',bgColor:'#1a0f0a',bgColorEnd:'#241712',bgImage:'',bgOpacity:0.15,
+        modules:[{id:'header',visible:true,order:1},{id:'video',visible:false,order:2},{id:'platforms',visible:true,order:3},{id:'follow',visible:true,order:4},{id:'collect',visible:true,order:5},{id:'activities',visible:true,order:6},{id:'contact',visible:true,order:7}]}
+};
+
+let config = JSON.parse(localStorage.getItem(CONFIG_KEY)) || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+function saveConfig() {
+    config.storeId = STORE_ID;
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    localStorage.setItem('storeConfig', JSON.stringify(config));
+    showToast('✅ 已保存');
+}
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+function previewNFC() {
+    const url = `${location.origin}${location.pathname.replace('admin','store')}?id=${STORE_ID}`;
+    window.open(url, '_blank');
+}
+
+function initApp() {
+    document.getElementById('topbarStoreId').textContent = STORE_ID;
+    document.getElementById('contentArea').innerHTML = renderDashboard();
+    // 导航事件绑定
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            const page = this.dataset.page;
+            document.getElementById('breadcrumb').textContent = this.textContent.trim();
+            document.getElementById('contentArea').innerHTML = pageRenderers[page]();
+        });
+    });
+}
+
+const pageRenderers = {
+    dashboard: ()=>`<div class="grid-4"><div class="stat-card"><div class="stat-value">128</div><div class="stat-label">NFC触碰</div></div></div>`,
+    orders: ()=>`<div class="section-card"><div class="section-title">📋 订单管理</div><p>功能已就绪</p></div>`,
+    verify: ()=>`<div class="section-card"><div class="section-title">🎟️ 优惠核销</div><input id="vcode" placeholder="核销码"><button class="btn" onclick="verifyCode()">核销</button><div id="vresult"></div></div>`,
+    layout: renderLayout,
+    basic: renderBasic,
+    platforms: renderPlatforms,
+    menu: renderMenu,
+    activities: renderActivities,
+    collect: renderCollect,
+    follow: renderFollow,
+    lottery: renderLottery,
+    video: ()=>`<div class="section-card"><div class="section-title">🎬 AI视频</div><input id="videoUrl" value="${config.videoUrl||''}"><button class="btn" onclick="config.videoUrl=document.getElementById('videoUrl').value;saveConfig();">保存</button></div>`,
+    poster: ()=>`<div class="section-card"><div class="section-title">🎨 AI海报</div><button class="btn" onclick="showToast('需对接API')">生成</button></div>`,
+    auth: ()=>`<div class="section-card"><div class="section-title">🔗 账号授权</div><p>演示</p></div>`,
+    publish: ()=>`<div class="section-card"><div class="section-title">📤 一键发布</div><button class="btn" onclick="showToast('发布成功(演示)')">发布</button></div>`,
+    finance: ()=>`<div class="section-card"><div class="section-title">💰 财务中心</div><p>演示</p></div>`,
+    renew: ()=>`<div class="section-card"><div class="section-title">🔄 续费管理</div><p>演示</p></div>`,
+    profile: ()=>`<div class="section-card"><div class="section-title">👤 个人中心</div><p>门店ID: ${STORE_ID}</p></div>`
+};
+
+function renderLayout() {
+    const layout = config.layout || DEFAULT_CONFIG.layout;
+    const moduleNames = {header:'品牌头部',video:'AI视频',platforms:'好评入口',follow:'关注矩阵',collect:'收藏打卡',activities:'限时活动',contact:'联系商家'};
+    return `
+    <div class="section-card"><div class="section-title">🎨 页面视觉</div>
+    <div class="grid-3">
+        <div class="form-group"><label>主题色</label><input type="color" id="themeColor" value="${layout.themeColor||'#d4943a'}" style="height:44px;"></div>
+        <div class="form-group"><label>背景色</label><input type="color" id="bgColor" value="${layout.bgColor||'#1a0f0a'}" style="height:44px;"></div>
+        <div class="form-group"><label>背景透明度</label><input id="bgOpacity" type="number" step="0.05" min="0" max="1" value="${layout.bgOpacity||0.15}"></div>
+    </div>
+    </div>
+    <div class="section-card"><div class="section-title">📐 模块布局</div>
+    ${(layout.modules||[]).map((m,i)=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fafafa;border-radius:8px;margin-bottom:8px;">
+            <span>⋮⋮</span><span style="flex:1;font-weight:600;">${moduleNames[m.id]||m.id}</span>
+            <input type="number" value="${m.order||i+1}" min="1" max="20" style="width:60px;" onchange="updateModuleOrder('${m.id}',this.value)">
+            <div class="toggle ${m.visible!==false?'active':''}" onclick="toggleModule('${m.id}',this)"></div>
+        </div>`).join('')}
+    <button class="btn" onclick="saveLayout()" style="margin-top:12px;">💾 保存装修</button></div>`;
+}
+window.updateModuleOrder = function(id, val) { const m = config.layout.modules.find(x=>x.id===id); if(m) m.order=parseInt(val)||99; };
+window.toggleModule = function(id, el) { const m = config.layout.modules.find(x=>x.id===id); if(m) m.visible = el.classList.toggle('active'); };
+window.saveLayout = function() {
+    config.layout.themeColor = document.getElementById('themeColor').value;
+    config.layout.bgColor = document.getElementById('bgColor').value;
+    config.layout.bgOpacity = parseFloat(document.getElementById('bgOpacity').value)||0.15;
+    saveConfig(); document.getElementById('contentArea').innerHTML = renderLayout();
+};
+function renderBasic() {
+    return `<div class="section-card"><div class="section-title">🏪 门店信息</div>
+    <div class="grid-2">
+        <div class="form-group"><label>店名</label><input id="storeName" value="${config.storeName}"></div>
+        <div class="form-group"><label>电话</label><input id="phone" value="${config.phone}"></div>
+        <div class="form-group"><label>微信</label><input id="wechatId" value="${config.wechatId}"></div>
+        <div class="form-group"><label>WiFi名</label><input id="wifiSSID" value="${config.wifiSSID}"></div>
+        <div class="form-group"><label>WiFi密码</label><input id="wifiPassword" value="${config.wifiPassword}"></div>
+    </div>
+    <div class="form-group"><label>地址</label><textarea id="address">${config.address}</textarea></div>
+    <button class="btn" onclick="saveBasic()">保存</button></div>`;
+}
+window.saveBasic = function() {
+    config.storeName=document.getElementById('storeName').value;
+    config.phone=document.getElementById('phone').value;
+    config.wechatId=document.getElementById('wechatId').value;
+    config.wifiSSID=document.getElementById('wifiSSID').value;
+    config.wifiPassword=document.getElementById('wifiPassword').value;
+    config.address=document.getElementById('address').value;
+    saveConfig();
+};
+function renderPlatforms() {
+    let html='<div class="section-card"><div class="section-title">📱 平台管理</div>';
+    Object.entries(config.platforms).forEach(([k,p])=>{
+        html+=`<div class="toggle-row"><span>${p.name}</span><input value="${p.scheme}" onchange="config.platforms['${k}'].scheme=this.value;saveConfig();"><div class="toggle ${p.enabled?'active':''}" onclick="this.classList.toggle('active');config.platforms['${k}'].enabled=this.classList.contains('active');saveConfig();"></div></div>`;
+    });
+    return html+'</div>';
+}
+function renderMenu() {
+    return `<div class="section-card"><div class="section-title">🍽️ 菜单 <button class="btn btn-sm" onclick="addMenuItem()">＋</button></div>
+    ${config.menu.map((m,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">${m.emoji} ${m.name} ¥${m.price} <span><button class="btn btn-sm" onclick="editMenuItem(${i})">✏️</button></span></div>`).join('')}</div>`;
+}
+window.addMenuItem = function() { config.menu.push({id:Date.now(),name:'新品',desc:'',price:0,emoji:'🍺',category:'beer',enabled:true}); saveConfig(); document.getElementById('contentArea').innerHTML=renderMenu(); };
+window.editMenuItem = function(i) { const m=config.menu[i]; m.name=prompt('名称',m.name)||m.name; m.price=parseFloat(prompt('价格',m.price))||0; saveConfig(); document.getElementById('contentArea').innerHTML=renderMenu(); };
+function renderActivities() { return `<div class="section-card"><div class="section-title">🎫 活动</div><p>功能就绪</p></div>`; }
+function renderCollect() {
+    const all=['dianping','douyin','gaode','xiaohongshu','kuaishou'];
+    const names={dianping:'大众点评',douyin:'抖音',gaode:'高德',xiaohongshu:'小红书',kuaishou:'快手'};
+    return `<div class="section-card"><div class="section-title">⭐ 收藏打卡</div>${all.map(k=>`<div class="toggle-row"><span>${names[k]}</span><div class="toggle ${config.collectPlatforms.includes(k)?'active':''}" onclick="toggleCollect('${k}',this)"></div></div>`).join('')}</div>`;
+}
+window.toggleCollect = function(k,el) { const i=config.collectPlatforms.indexOf(k); if(i>-1) config.collectPlatforms.splice(i,1); else config.collectPlatforms.push(k); el.classList.toggle('active'); saveConfig(); };
+function renderFollow() {
+    const accounts = config.followAccounts || [];
+    return `<div class="section-card"><div class="section-title">➕ 关注矩阵 <button class="btn btn-sm" onclick="addFollow()">＋</button></div>
+    ${accounts.map((a,i)=>`<div>${a.platform} - ${a.accountId} <button class="btn btn-sm btn-danger" onclick="config.followAccounts.splice(${i},1);saveConfig();document.getElementById('contentArea').innerHTML=renderFollow();">删除</button></div>`).join('')}</div>`;
+}
+window.addFollow = function() { const p=prompt('平台'); if(!p)return; if(!config.followAccounts)config.followAccounts=[]; config.followAccounts.push({platform:p,accountId:prompt('ID')||'',emoji:'📱',name:p}); saveConfig(); document.getElementById('contentArea').innerHTML=renderFollow(); };
+function renderLottery() {
+    return `<div class="section-card"><div class="section-title">🎰 抽奖</div>
+    <div class="toggle-row"><span>启用</span><div class="toggle ${config.lottery.enabled?'active':''}" onclick="this.classList.toggle('active');config.lottery.enabled=this.classList.contains('active');saveConfig();"></div></div>
+    ${config.lottery.prizes.map((p,i)=>`<div>${p.emoji} ${p.name} (权重:${p.weight}) <button class="btn btn-sm" onclick="editPrize(${i})">✏️</button></div>`).join('')}
+    <button class="btn btn-sm" onclick="addPrize()">＋</button></div>`;
+}
+window.editPrize = function(i) { const p=config.lottery.prizes[i]; p.name=prompt('名称',p.name)||p.name; p.weight=parseInt(prompt('权重',p.weight))||10; saveConfig(); document.getElementById('contentArea').innerHTML=renderLottery(); };
+window.addPrize = function() { config.lottery.prizes.push({name:'新奖品',desc:'',emoji:'🎁',weight:10,codePrefix:'NEW'}); saveConfig(); document.getElementById('contentArea').innerHTML=renderLottery(); };
+window.verifyCode = function() {
+    const code=document.getElementById('vcode').value.trim().toUpperCase();
+    const records=JSON.parse(localStorage.getItem('lottery_records')||'[]');
+    const found=records.find(r=>r.code===code);
+    if(!found) document.getElementById('vresult').innerHTML='<span style="color:red;">❌ 无效</span>';
+    else if(found.used) document.getElementById('vresult').innerHTML='<span style="color:orange;">⚠️ 已核销</span>';
+    else { found.used=true; localStorage.setItem('lottery_records',JSON.stringify(records)); document.getElementById('vresult').innerHTML='<span style="color:green;">✅ 核销成功</span>'; }
+};
+</script>
+</body>
+</html>

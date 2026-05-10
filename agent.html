@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推广团队 · 代理运营中心</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --sidebar-bg: #1a1a2e;
+            --amber: #d4943a;
+            --amber-light: #f0c878;
+            --text: #1a1a1a;
+            --muted: #888;
+            --border: #e0e0e0;
+            --danger: #c41e3a;
+            --green: #4caf84;
+            --card: #fff;
+            --radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg); color: var(--text);
+            height: 100vh; display: flex; overflow: hidden;
+        }
+        .sidebar {
+            width: 240px; background: var(--sidebar-bg);
+            display: flex; flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3); flex-shrink: 0; z-index: 10;
+        }
+        .sidebar-header { padding: 24px 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header .logo { font-size: 20px; font-weight: 800; color: var(--amber-light); }
+        .sidebar-header .sub { font-size: 11px; color: #667; }
+        .sidebar-nav { flex:1; overflow-y:auto; padding: 12px 0; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px; font-size: 14px; color: #aaa;
+            cursor: pointer; border-left: 3px solid transparent; transition: 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: rgba(212,148,58,0.15); color: var(--amber-light); border-left-color: var(--amber); font-weight:600; }
+        .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        .main { flex:1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar {
+            background: #fff; padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar .breadcrumb { font-size: 14px; color: var(--muted); }
+        .content-area { flex:1; padding: 24px; overflow-y: auto; }
+        .section-card { background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow); }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        .stat-card { background: #fff; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-left: 4px solid var(--amber); }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--amber); }
+        .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+        .btn { background: var(--amber); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: var(--danger); }
+        .btn-outline { background: #fff; border: 1px solid var(--amber); color: var(--amber); }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .table th { font-weight: 600; color: #555; background: #fafafa; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .badge-danger { background: #ffebee; color: #b71c1c; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #333; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 9999; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- ========== 密码验证层 ========== -->
+<div id="authOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:99999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:30px;text-align:center;max-width:380px;width:90%;">
+        <div style="font-size:48px;margin-bottom:16px;">🚀</div>
+        <h2>代理后台</h2>
+        <p style="color:#888;margin-bottom:20px;">请输入代理密码</p>
+        <input type="password" id="authPass" placeholder="密码" style="width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:8px;font-size:16px;text-align:center;margin-bottom:16px;">
+        <button class="btn" onclick="verifyAgent()" style="width:100%;">进入</button>
+        <p id="authErr" style="color:#c41e3a;margin-top:12px;display:none;">❌ 密码错误</p>
+    </div>
+</div>
+
+<!-- ========== 主内容 ========== -->
+<div class="sidebar" id="mainSidebar" style="display:none;">
+    <div class="sidebar-header"><div class="logo">🚀 推广中心</div><div class="sub">代理运营管理</div></div>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span>数据看板</div>
+        <div class="nav-item" data-page="stores"><span class="icon">🏪</span>门店管理</div>
+        <div class="nav-item" data-page="orderPlan"><span class="icon">🛒</span>套餐订购</div>
+        <div class="nav-item" data-page="renewNotice"><span class="icon">⏰</span>续费提醒</div>
+        <div class="nav-item" data-page="reward"><span class="icon">💎</span>推广奖励</div>
+        <div class="nav-item" data-page="profile"><span class="icon">👤</span>个人中心</div>
+    </nav>
+</div>
+<div class="main" id="mainContent" style="display:none;">
+    <div class="topbar"><div class="breadcrumb" id="breadcrumb">📊 数据看板</div><div>代理ID: AG08821</div></div>
+    <div class="content-area" id="contentArea"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ====================== 密码验证 ======================
+const AGENT_PASSWORD = 'agent123';
+const AUTH_KEY = 'agent_auth';
+
+const authData = JSON.parse(localStorage.getItem(AUTH_KEY) || '{}');
+if (authData.authenticated && (Date.now() - authData.time < 86400000)) {
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('mainSidebar').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'flex';
+    initAgent();
+}
+
+window.verifyAgent = function() {
+    const input = document.getElementById('authPass').value;
+    if (input === AGENT_PASSWORD) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ authenticated: true, time: Date.now() }));
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('mainSidebar').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'flex';
+        initAgent();
+    } else {
+        document.getElementById('authErr').style.display = 'block';
+        document.getElementById('authPass').value = '';
+    }
+};
+document.getElementById('authPass').addEventListener('keydown', function(e) { if (e.key === 'Enter') verifyAgent(); });
+
+// ====================== 数据 ======================
+const AGENT_ID = 'AG08821';
+const AGENT_STORES_KEY = 'agentStores_' + AGENT_ID;
+const AGENT_REWARD_KEY = 'agentReward_' + AGENT_ID;
+
+if (!localStorage.getItem(AGENT_STORES_KEY)) {
+    localStorage.setItem(AGENT_STORES_KEY, JSON.stringify([
+        { id:'store_001', name:'痛疯精酿', address:'杭州市临安区花间里', plan:'专业版', price:2999, expiryDate:'2026-12-31', nfcActive:true, status:'正常', adminPassword:'beer123' }
+    ]));
+}
+if (!localStorage.getItem(AGENT_REWARD_KEY)) {
+    localStorage.setItem(AGENT_REWARD_KEY, JSON.stringify({ totalEarned:12680, balance:4680, withdrawn:8000, rate:0.2, records:[] }));
+}
+
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2000); }
+function getStores() { return JSON.parse(localStorage.getItem(AGENT_STORES_KEY) || '[]'); }
+function saveStores(s) { localStorage.setItem(AGENT_STORES_KEY, JSON.stringify(s)); }
+function getReward() { return JSON.parse(localStorage.getItem(AGENT_REWARD_KEY)); }
+function saveReward(r) { localStorage.setItem(AGENT_REWARD_KEY, JSON.stringify(r)); }
+
+function initAgent() {
+    document.getElementById('contentArea').innerHTML = renderDashboard();
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            const page = this.dataset.page;
+            document.getElementById('breadcrumb').textContent = this.textContent.trim();
+            document.getElementById('contentArea').innerHTML = pages[page]();
+        });
+    });
+}
+
+const pages = {
+    dashboard: ()=>{
+        const stores=getStores(), rew=getReward();
+        return `<div class="grid-4" style="margin-bottom:24px;"><div class="stat-card"><div class="stat-value">${stores.length}</div><div class="stat-label">管理门店</div></div><div class="stat-card"><div class="stat-value">¥${rew.totalEarned}</div><div class="stat-label">累计收益</div></div><div class="stat-card"><div class="stat-value">¥${rew.balance}</div><div class="stat-label">可提现</div></div></div>`;
+    },
+    stores: ()=>{
+        const stores = getStores();
+        return `<div class="section-card"><div class="section-title" style="justify-content:space-between;">🏪 门店 <button class="btn btn-sm" onclick="showAddStoreModal()">＋ 上架</button></div>
+        <table class="table"><thead><tr><th>门店</th><th>套餐</th><th>到期</th><th>NFC</th><th>NFC链接</th><th>后台链接</th><th>操作</th></tr></thead>
+        <tbody>${stores.map((s,i)=>`<tr><td>${s.name}</td><td>${s.plan}</td><td>${s.expiryDate}</td><td>${s.nfcActive?'✅':'❌'}</td>
+        <td><a href="store.html?id=${s.id}" target="_blank">预览</a></td>
+        <td><a href="admin.html?id=${s.id}" target="_blank">后台</a></td>
+        <td><button class="btn btn-sm" onclick="toggleNFC(${i})">${s.nfcActive?'停用':'激活'}</button></td></tr>`).join('')}</tbody></table></div>`;
+    },
+    orderPlan: ()=>{
+        const stores=getStores();
+        return `<div class="section-card"><div class="section-title">🛒 套餐订购</div>
+        <div class="grid-3">${[{name:'基础版',price:999},{name:'专业版',price:2999},{name:'旗舰版',price:5999}].map(p=>`<div class="stat-card" style="text-align:center;"><div class="stat-value" style="font-size:22px;">${p.name}</div><div>¥${p.price}/年</div><button class="btn btn-sm" onclick="purchasePlan('${p.name}',${p.price})">订购</button></div>`).join('')}</div>
+        <select id="planStoreSelect">${stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>`;
+    },
+    renewNotice: ()=>{
+        const stores=getStores(), now=new Date();
+        const due=stores.filter(s=>Math.ceil((new Date(s.expiryDate)-now)/86400000)<=30);
+        return `<div class="section-card"><div class="section-title">⏰ 即将到期</div>${due.length===0?'<p>暂无</p>':due.map(s=>`<div>${s.name} - ${s.expiryDate} <button class="btn btn-sm" onclick="renewStore('${s.id}')">续费</button></div>`).join('')}</div>`;
+    },
+    reward: ()=>{
+        const rew=getReward();
+        return `<div class="grid-3" style="margin-bottom:24px;"><div class="stat-card"><div class="stat-value">¥${rew.totalEarned}</div></div><div class="stat-card"><div class="stat-value">¥${rew.balance}</div></div></div>
+        <div class="section-card"><div class="section-title">收益明细 <button class="btn btn-sm" onclick="withdraw()">提现</button></div></div>`;
+    },
+    profile: ()=>`<div class="section-card"><div class="section-title">👤 代理信息</div><p>代理ID: ${AGENT_ID}</p></div>`
+};
+
+window.showAddStoreModal = function() {
+    const name = prompt('门店名称'); if (!name) return;
+    const address = prompt('地址') || '';
+    const plan = prompt('套餐(基础版/专业版/旗舰版)') || '基础版';
+    const price = parseInt(prompt('年费') || '999');
+    const adminPassword = Math.random().toString(36).slice(2, 8); // 自动生成商家密码
+    const expiry = new Date(); expiry.setFullYear(expiry.getFullYear()+1);
+    const stores = getStores();
+    const newId = 'store_' + Date.now();
+    stores.push({ id:newId, name, address, plan, price, expiryDate: expiry.toISOString().split('T')[0], nfcActive:false, status:'正常', adminPassword });
+    saveStores(stores);
+    // 初始化门店空配置
+    const defaultCfg = { storeName:name, storeId:newId, address, phone:'', wechatId:'', adminPassword };
+    localStorage.setItem('storeConfig_'+newId, JSON.stringify(defaultCfg));
+    alert('✅ 门店创建成功！\n\n门店ID：'+newId+'\nNFC链接：'+location.origin+'/store.html?id='+newId+'\n商家后台：'+location.origin+'/admin.html?id='+newId+'\n后台密码：'+adminPassword+'\n\n请将密码告知商家！');
+    document.getElementById('contentArea').innerHTML = pages.stores();
+};
+window.toggleNFC = function(i) { const s=getStores(); s[i].nfcActive=!s[i].nfcActive; saveStores(s); document.getElementById('contentArea').innerHTML=pages.stores(); };
+window.purchasePlan = function(plan,price) {
+    const storeId=document.getElementById('planStoreSelect')?.value;
+    if(!storeId) return;
+    const stores=getStores(); const store=stores.find(s=>s.id===storeId);
+    if(store){ store.plan=plan; store.price=price; store.nfcActive=true; const e=new Date(); e.setFullYear(e.getFullYear()+1); store.expiryDate=e.toISOString().split('T')[0]; saveStores(stores);
+        const rew=getReward(); const c=price*rew.rate; rew.totalEarned+=c; rew.balance+=c; saveReward(rew);
+        showToast('订购成功，佣金¥'+c); document.getElementById('contentArea').innerHTML=pages.orderPlan(); }
+};
+window.renewStore = function(id) {
+    const stores=getStores(); const s=stores.find(x=>x.id===id);
+    if(s&&confirm('续费一年 ¥'+s.price+'？')){ const e=new Date(s.expiryDate); e.setFullYear(e.getFullYear()+1); s.expiryDate=e.toISOString().split('T')[0]; saveStores(stores);
+        const rew=getReward(); const c=s.price*rew.rate; rew.totalEarned+=c; rew.balance+=c; saveReward(rew);
+        showToast('续费成功，佣金¥'+c); document.getElementById('contentArea').innerHTML=pages.renewNotice(); }
+};
+window.withdraw = function() { const rew=getReward(); if(rew.balance<=0)return showToast('余额不足'); rew.withdrawn+=rew.balance; rew.balance=0; saveReward(rew); showToast('提现申请已提交'); };
+</script>
+</body>
+</html>
