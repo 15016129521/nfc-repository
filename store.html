@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title id="pageTitle">碰一碰 · 智能拓客</title>
+    <style>
+        :root {
+            --theme-color: #d4943a;
+            --theme-light: #f0c878;
+            --bg-deep: #1a0f0a;
+            --bg-card: #2a1f18;
+            --text-primary: #f0ebe0;
+            --text-secondary: #b8a898;
+            --text-dark: #2a1f18;
+            --border: #3a2a1a;
+            --white: #ffffff;
+            --red: #c41e3a;
+            --tab-height: 64px;
+            --brand-bg-start: #1a0f0a;
+            --brand-bg-end: #241712;
+            --bg-image: none;
+            --bg-overlay: rgba(0,0,0,0);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: var(--bg-deep); color: var(--text-primary); min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 12px;
+            padding-bottom: calc(var(--tab-height) + 16px); position: relative;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: var(--bg-image); background-size: cover; background-position: center;
+            opacity: var(--bg-overlay); z-index: -1;
+        }
+        .container { width: 100%; max-width: 420px; background: var(--bg-deep); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; }
+        .tab-page { display: none; flex-direction: column; }
+        .tab-page.active { display: flex; }
+        .header { padding: 40px 24px 24px; text-align: center; position: relative; background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--theme-color) 18%, transparent) 0%, transparent 60%), linear-gradient(180deg, var(--brand-bg-start) 0%, var(--brand-bg-end) 100%); }
+        .header::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: 2px; background: linear-gradient(90deg, transparent, var(--theme-color), transparent); border-radius: 2px; }
+        .brand-icon { font-size: 64px; display: block; margin-bottom: 14px; animation: gentle-bubble 2.5s ease-in-out infinite; filter: drop-shadow(0 4px 12px rgba(212,148,58,0.3)); }
+        @keyframes gentle-bubble { 0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-6px) scale(1.04);} }
+        .brand-name { font-size: 28px; font-weight: 800; letter-spacing: 3px; color: var(--theme-light); text-shadow: 0 2px 8px color-mix(in srgb, var(--theme-color) 40%, transparent); margin-bottom: 6px; }
+        .brand-tagline { font-size: 12px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; }
+        .brand-labels { display: flex; justify-content: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .brand-label { font-size: 10px; color: var(--theme-light); border: 1px solid color-mix(in srgb, var(--theme-color) 30%, transparent); border-radius: 20px; padding: 4px 12px; letter-spacing: 0.5px; background: color-mix(in srgb, var(--theme-color) 6%, transparent); }
+        .greeting { text-align: center; padding: 16px 24px 0; font-size: 14px; color: var(--text-primary); line-height: 1.6; }
+        .greeting .accent { color: var(--theme-light); font-weight: 600; }
+        .content-area { background: var(--white); border-radius: 28px 28px 0 0; margin-top: 8px; padding: 24px 16px 100px; }
+        .section-card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.03); }
+        .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .section-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .section-title { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+        .section-subtitle { font-size: 10px; color: #888; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .platform-btn { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); background: #fafafa; cursor: pointer; transition: all 0.2s; position: relative; -webkit-tap-highlight-color: transparent; }
+        .platform-btn:active { transform: scale(0.97); background: #f0f0f0; }
+        .platform-btn .p-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .platform-btn .p-info { flex: 1; min-width: 0; }
+        .platform-btn .p-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+        .platform-btn .p-desc { font-size: 10px; color: #888; }
+        .platform-btn .p-spark { margin-left: auto; color: var(--theme-color); font-size: 14px; flex-shrink: 0; }
+        .deal-card { display: flex; gap: 12px; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--theme-color) 20%, transparent); background: #fffbf5; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; align-items: center; -webkit-tap-highlight-color: transparent; }
+        .deal-card:active { transform: scale(0.98); background: #fff7ed; }
+        .deal-emoji { font-size: 36px; flex-shrink: 0; }
+        .deal-info { flex: 1; min-width: 0; }
+        .deal-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+        .deal-desc { font-size: 10px; color: #888; margin-top: 2px; }
+        .deal-price { text-align: right; flex-shrink: 0; }
+        .deal-price .current { font-size: 18px; font-weight: 800; color: var(--red); }
+        .deal-price .original { font-size: 10px; color: #aaa; text-decoration: line-through; }
+        .scroll-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .scroll-row::-webkit-scrollbar { display: none; }
+        .fav-card { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.08); min-width: 80px; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+        .fav-card:active { transform: scale(0.95); background: #f0f0f0; }
+        .follow-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+        .follow-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 16px; border-radius: 14px; background: #fafafa; cursor: pointer; transition: 0.2s; border: 1px solid #eee; }
+        .follow-item:active { transform: scale(0.95); background: #f0f0f0; }
+        .video-card { border-radius: 16px; overflow: hidden; position: relative; background: #000; cursor: pointer; }
+        .video-card video, .video-card img { width: 100%; max-height: 200px; object-fit: cover; display: block; }
+        .video-play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .contact-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.08); background: #fafafa; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+        .contact-btn:active { transform: scale(0.95); }
+        .contact-btn .c-emoji { font-size: 26px; }
+        .contact-btn .c-label { font-size: 11px; font-weight: 600; color: #1a1a1a; }
+        .contact-btn .c-detail { font-size: 9px; color: #888; text-align: center; word-break: break-all; }
+        .contact-btn.primary { background: var(--theme-color); border-color: var(--theme-color); }
+        .contact-btn.primary .c-label { color: #fff; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; height: var(--tab-height); z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: #888; cursor: pointer; padding: 8px 12px; flex: 1; text-align: center; }
+        .nav-item.active { color: var(--theme-color); font-weight: 700; }
+        .nav-item .nav-icon { font-size: 22px; }
+        .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); background: #333; color: #fff; padding: 12px 28px; border-radius: 30px; font-size: 14px; pointer-events: none; opacity: 0; transition: all 0.3s ease; z-index: 9999; white-space: nowrap; }
+        .toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+        .lottery-overlay, .prize-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .lottery-modal, .prize-modal { background: #fff; border-radius: 20px; padding: 24px; width: 90%; max-width: 360px; text-align: center; }
+        .lottery-header { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 16px; }
+        .lottery-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
+        .lottery-wheel-container { position: relative; width: 260px; height: 260px; margin: 0 auto 20px; }
+        .lottery-wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid var(--theme-color); transition: transform 4s cubic-bezier(0.17,0.67,0.12,0.99); background: conic-gradient(#ff6b6b 0 45deg, #ffd93d 45deg 90deg, #6bcb77 90deg 135deg, #4d96ff 135deg 180deg, #ff6b6b 180deg 225deg, #ffd93d 225deg 270deg, #6bcb77 270deg 315deg, #4d96ff 315deg 360deg); }
+        .wheel-pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 28px; z-index: 2; }
+        .lottery-btn { background: linear-gradient(135deg, var(--theme-color), var(--theme-light)); color: #fff; border: none; padding: 14px 40px; border-radius: 30px; font-size: 18px; font-weight: 700; cursor: pointer; }
+        .lottery-btn:disabled { background: #ccc; }
+        .prize-emoji { font-size: 64px; margin-bottom: 12px; }
+        .prize-title { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+        .prize-desc { font-size: 14px; color: #666; }
+        .prize-code { background: #f5f0e8; border: 2px dashed var(--theme-color); border-radius: 12px; padding: 12px 20px; font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--red); margin: 12px 0; display: inline-block; }
+        .prize-confirm { background: var(--theme-color); color: #fff; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .order-page { background: #f8f8f8; min-height: 100vh; }
+        .order-header { background: var(--bg-deep); padding: 30px 20px 20px; text-align: center; color: var(--theme-light); }
+        .order-categories { display: flex; gap: 12px; padding: 16px; overflow-x: auto; background: #fff; border-bottom: 1px solid #eee; }
+        .order-category { padding: 8px 16px; border-radius: 20px; background: #f5f5f5; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
+        .order-category.active { background: var(--theme-color); color: #fff; }
+        .menu-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .menu-item { display: flex; gap: 12px; background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); align-items: center; }
+        .menu-item-img { width: 70px; height: 70px; border-radius: 12px; background: #e0e0e0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .menu-item-info { flex: 1; }
+        .menu-item-name { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+        .menu-item-desc { font-size: 11px; color: #888; margin: 4px 0; }
+        .menu-item-price { font-size: 16px; font-weight: 700; color: var(--red); }
+        .add-btn { background: var(--theme-color); color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .add-btn:active { transform: scale(0.95); }
+        .cart-bar { position: fixed; bottom: var(--tab-height); left: 0; right: 0; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; z-index: 500; }
+        .cart-count { background: var(--red); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .cart-btn { background: var(--theme-color); color: #fff; border: none; border-radius: 24px; padding: 10px 24px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .footer-tag { text-align: center; padding: 16px; font-size: 10px; color: #bbb; letter-spacing: 1px; }
+        .profile-page { background: #f8f8f8; min-height: 100vh; }
+        .profile-header { background: var(--bg-deep); padding: 50px 20px 30px; text-align: center; color: white; }
+        .profile-avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--theme-color); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+        .profile-menu { background: #fff; margin: 16px; border-radius: 16px; overflow: hidden; }
+        .profile-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        @keyframes pulse { 0%{opacity:1;} 50%{opacity:0.3;} 100%{opacity:1;} }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div class="tab-page active" id="homePage">
+        <div id="homeModules"></div>
+        <div class="footer-tag" id="footerTag"></div>
+    </div>
+    <div class="tab-page order-page" id="orderPage">
+        <div class="order-header"><h2>🍻 在线点单</h2><p style="font-size:12px;opacity:0.8;">堂食 · 外送</p></div>
+        <div class="order-categories" id="categoryBar"></div>
+        <div class="menu-list" id="menuList"></div>
+        <div class="cart-bar" id="cartBar" style="display:none;">
+            <div class="cart-info"><div class="cart-count" id="cartCount">0</div><span id="cartTotal">¥0</span></div>
+            <button class="cart-btn" onclick="submitOrder()">去下单</button>
+        </div>
+    </div>
+    <div class="tab-page profile-page" id="profilePage">
+        <div class="profile-header"><div class="profile-avatar">😎</div><h3>酒友</h3><p style="font-size:12px;opacity:0.7;" id="profileStoreName"></p></div>
+        <div class="profile-menu">
+            <div class="profile-item" onclick="showMyOrders()"><span>📋 我的订单</span><span>›</span></div>
+            <div class="profile-item" onclick="showLotteryHistory()"><span>🎁 抽奖记录</span><span>›</span></div>
+            <div class="profile-item" onclick="callPhone()"><span>📞 联系商家</span><span>›</span></div>
+            <div class="profile-item" onclick="connectWifi()"><span>📶 连接WiFi</span><span>›</span></div>
+        </div>
+        <div id="profileDetailContainer" style="padding:16px;display:none;"></div>
+    </div>
+</div>
+<div class="bottom-nav">
+    <div class="nav-item active" data-tab="home" onclick="switchTab('home')"><span class="nav-icon">🏠</span>首页</div>
+    <div class="nav-item" data-tab="order" onclick="switchTab('order')"><span class="nav-icon">🍻</span>点单</div>
+    <div class="nav-item" data-tab="profile" onclick="switchTab('profile')"><span class="nav-icon">👤</span>我的</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="lottery-overlay" id="lotteryOverlay" style="display:none;">
+    <div class="lottery-modal">
+        <div class="lottery-header"><span>🎉 感谢分享！</span><button class="lottery-close" onclick="closeLottery()">✕</button></div>
+        <div class="lottery-wheel-container"><div class="lottery-wheel" id="lotteryWheel"></div><div class="wheel-pointer">📍</div></div>
+        <button class="lottery-btn" id="lotteryBtn" onclick="startLottery()">🎰 免费抽奖</button>
+        <p id="lotteryHint" style="margin-top:8px;font-size:12px;color:#999;">每人限抽1次</p>
+    </div>
+</div>
+<div class="prize-overlay" id="prizeOverlay" style="display:none;">
+    <div class="prize-modal">
+        <div class="prize-emoji" id="prizeEmoji">🎁</div>
+        <div class="prize-title" id="prizeTitle"></div>
+        <div class="prize-desc" id="prizeDesc"></div>
+        <div class="prize-code" id="prizeCode"></div>
+        <p style="font-size:11px;color:#999;">请截图出示给店员核销</p>
+        <button class="prize-confirm" onclick="closePrize()">我知道了</button>
+    </div>
+</div>
+
+<script>
+// ====================== 门店配置加载 ======================
+function getStoreId() { const p = new URLSearchParams(window.location.search); return p.get('id') || 'tongfeng001'; }
+const STORE_ID = getStoreId();
+const CONFIG_KEY = 'storeConfig_' + STORE_ID;
+
+function loadConfig() {
+    // 自动初始化数据，防止空数据
+    if (!localStorage.getItem(CONFIG_KEY)) {
+        const defaultCfg = getDefaultConfig();
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(defaultCfg));
+        localStorage.setItem('storeConfig', JSON.stringify(defaultCfg));
+    }
+    let cfg = localStorage.getItem(CONFIG_KEY);
+    if (cfg) return JSON.parse(cfg);
+    return getDefaultConfig();
+}
+
+function getDefaultConfig() {
+    return {
+        storeName:'痛疯精酿', storeId:STORE_ID, address:'浙江省杭州市临安区花间里',
+        phone:'18258222619', wechatId:'Wjl1715514794', wifiSSID:'TongFeng-WiFi', wifiPassword:'88888888',
+        brandIcon:'🍺', brandTagline:'TONG FENG CRAFT BEER', brandLabels:['精酿鲜啤','临安花间里','微醺据点'],
+        platforms:{
+            xiaohongshu:{enabled:true,name:'小红书',icon:'红',scheme:'xhsdiscover://post',desc:'发笔记种草'},
+            dianping:{enabled:true,name:'大众点评',icon:'点',scheme:'dianping://ugcreview?refertype=0',desc:'写好评'},
+            meituan:{enabled:true,name:'美团',icon:'美',scheme:'meituan://',desc:'写评价'},
+            douyin:{enabled:true,name:'抖音',icon:'抖',scheme:'snssdk1128://',desc:'发视频/评价'},
+            gaode:{enabled:true,name:'高德地图',icon:'高',scheme:'iosamap://',desc:'写评价'},
+            ctrip:{enabled:true,name:'携程',icon:'携',scheme:'ctrip://',desc:'写评价'},
+            kuaishou:{enabled:true,name:'快手',icon:'快',scheme:'kwai://',desc:'发视频'},
+            wechat_moments:{enabled:true,name:'朋友圈',icon:'微',scheme:'weixin://',desc:'分享打卡'}
+        },
+        menu:[
+            {id:1,name:'龙井小麦',desc:'清爽茶香，回甘悠长',price:38,emoji:'🍵',category:'beer',enabled:true},
+            {id:2,name:'痛疯浑浊IPA',desc:'热带水果香气炸裂',price:48,emoji:'🍊',category:'beer',enabled:true},
+            {id:3,name:'炸鸡拼盘',desc:'酥脆多汁',price:28,emoji:'🍗',category:'snack',enabled:true},
+            {id:4,name:'品鉴套餐',desc:'3款精酿+小吃',price:88,emoji:'🍱',category:'set',enabled:true}
+        ],
+        activities:[], collectPlatforms:['dianping','douyin','gaode','xiaohongshu'],
+        lottery:{enabled:true,prizes:[
+            {name:'精酿畅饮券',desc:'任选1杯',emoji:'🍺',weight:10,codePrefix:'VIP'},
+            {name:'小吃拼盘',desc:'免费小吃',emoji:'🍟',weight:20,codePrefix:'SNACK'}
+        ]},
+        followAccounts:[], videoUrl:'',
+        layout:{
+            themeColor:'#d4943a',themeLight:'#f0c878',bgColor:'#1a0f0a',bgColorEnd:'#241712',
+            bgImage:'',bgOpacity:0.15,
+            modules:[
+                {id:'header',visible:true,order:1},{id:'platforms',visible:true,order:2},
+                {id:'collect',visible:true,order:3},{id:'activities',visible:true,order:4},
+                {id:'contact',visible:true,order:5}
+            ]
+        }
+    };
+}
+
+const CONFIG = loadConfig();
+document.title = CONFIG.storeName + ' · 碰一碰';
+
+function applyTheme() {
+    const l = CONFIG.layout || {};
+    const r = document.documentElement.style;
+    r.setProperty('--theme-color', l.themeColor || '#d4943a');
+    r.setProperty('--theme-light', l.themeLight || '#f0c878');
+    r.setProperty('--bg-deep', l.bgColor || '#1a0f0a');
+    r.setProperty('--brand-bg-start', l.bgColor || '#1a0f0a');
+    r.setProperty('--brand-bg-end', l.bgColorEnd || '#241712');
+    r.setProperty('--bg-image', l.bgImage ? `url(${l.bgImage})` : 'none');
+    r.setProperty('--bg-overlay', (l.bgOpacity || 0.15).toString());
+}
+applyTheme();
+
+const componentRenderers = {
+    header:()=>{
+        const c=CONFIG;
+        return `<div class="header"><span class="brand-icon">${c.brandIcon||'🍺'}</span><h1 class="brand-name">${c.storeName}</h1><p class="brand-tagline">${c.brandTagline||''}</p><div class="brand-labels">${(c.brandLabels||[]).map(l=>`<span class="brand-label">${l}</span>`).join('')}</div></div><div class="greeting">欢迎来到<span class="accent">${c.storeName}</span> 🥂<br>碰一碰，分享美好时刻</div>`;
+    },
+    video:()=>{
+        if(!CONFIG.videoUrl) return '';
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(0,0,0,0.05);">🎬</div><div><div class="section-title">探店视频</div></div></div><div class="video-card" onclick="seamlessJump('douyin')"><video src="${CONFIG.videoUrl}" muted></video><div class="video-play-btn">▶</div></div><button class="lottery-btn" style="width:100%;margin-top:10px;" onclick="seamlessJump('douyin')">📤 发视频</button></div>`;
+    },
+    platforms:()=>{
+        const platforms=CONFIG.platforms||{};
+        const entries=Object.entries(platforms).filter(([,v])=>v.enabled);
+        if(!entries.length) return '';
+        const colors={xiaohongshu:'#ff2442',dianping:'#ff6633',meituan:'#ffd100',douyin:'#000',gaode:'#4285f4',ctrip:'#2577e6',kuaishou:'#ff5000',wechat_moments:'#5b9bd5'};
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(196,30,58,0.07);">📝</div><div><div class="section-title">发笔记 · 写评价</div><div class="section-subtitle">AI智能生成，一键发布</div></div></div><div class="btn-grid">${entries.map(([k,p])=>`<div class="platform-btn" data-platform="${k}" onclick="seamlessJump('${k}')"><div class="p-icon" style="background:${colors[k]||'#888'};">${p.icon||k[0]}</div><div class="p-info"><div class="p-name">${p.name}</div><div class="p-desc">${p.desc||''}</div></div><span class="p-spark">✨</span></div>`).join('')}</div></div>`;
+    },
+    follow:()=>{
+        const accounts=CONFIG.followAccounts||[];
+        if(!accounts.length) return '';
+        const names={douyin:'抖音',xiaohongshu:'小红书',kuaishou:'快手',wechat:'公众号'};
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(66,133,244,0.07);">➕</div><div><div class="section-title">关注我们</div></div></div><div class="follow-grid">${accounts.map(a=>`<div class="follow-item" onclick="openFollow('${a.platform}','${a.accountId||''}')"><span style="font-size:28px;">${a.emoji||'📱'}</span><span style="font-size:12px;font-weight:600;">${names[a.platform]||a.platform}</span></div>`).join('')}</div></div>`;
+    },
+    collect:()=>{
+        const platforms=CONFIG.collectPlatforms||[];
+        if(!platforms.length) return '';
+        const info={dianping:{name:'大众点评',icon:'点',bg:'#ff6633',action:'收藏/打卡'},douyin:{name:'抖音',icon:'抖',bg:'#000',action:'关注店铺'},gaode:{name:'高德地图',icon:'高',bg:'#4285f4',action:'收藏地点'},xiaohongshu:{name:'小红书',icon:'红',bg:'#ff2442',action:'关注店铺'},kuaishou:{name:'快手',icon:'快',bg:'#ff5000',action:'关注店铺'}};
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(212,160,23,0.07);">⭐</div><div><div class="section-title">收藏打卡</div></div></div><div class="scroll-row">${platforms.map(k=>{const i=info[k]||{};return`<div class="fav-card" onclick="seamlessJump('${k}')"><div class="f-icon" style="background:${i.bg||'#888'};">${i.icon||k[0]}</div><div class="f-name">${i.name||k}</div><div class="f-action">${i.action||''}</div><span class="f-tag" style="background:${i.bg||'#888'};">收藏</span></div>`;}).join('')}</div></div>`;
+    },
+    activities:()=>{
+        const activities=CONFIG.activities||[];
+        if(!activities.length) return '';
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(196,30,58,0.07);">🎫</div><div><div class="section-title">限时活动</div></div></div>${activities.filter(a=>a.enabled!==false).map(a=>`<div class="deal-card" onclick="seamlessJump('${a.platform||'dianping'}')"><span class="deal-emoji">${a.emoji||'🎉'}</span><div class="deal-info"><div class="deal-title">${a.title}</div><div class="deal-desc">${a.desc||''}</div></div><div class="deal-price"><div class="current">¥${a.priceCurrent||0}</div><div class="original">¥${a.priceOriginal||0}</div></div></div>`).join('')}</div>`;
+    },
+    contact:()=>{
+        const c=CONFIG;
+        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(212,160,23,0.07);">📞</div><div><div class="section-title">联系商家</div></div></div><div class="contact-grid"><div class="contact-btn primary" onclick="callPhone()"><span class="c-emoji">📞</span><span class="c-label">电话咨询</span><span class="c-detail">${c.phone}</span></div><div class="contact-btn" onclick="addWechat()"><span class="c-emoji">💬</span><span class="c-label">添加微信</span><span class="c-detail">${c.wechatId}</span></div><div class="contact-btn" onclick="connectWifi()"><span class="c-emoji">📶</span><span class="c-label">连接WiFi</span><span class="c-detail">一键连网</span></div></div><div style="text-align:center;margin-top:12px;font-size:11px;color:#888;">📍 ${c.address}</div></div>`;
+    }
+};
+
+function renderHome() {
+    const layout=CONFIG.layout||{};
+    const modules=(layout.modules||[]).filter(m=>m.visible!==false&&m.id!=='menu');
+    modules.sort((a,b)=>(a.order||99)-(b.order||99));
+    let html='';
+    modules.forEach(mod=>{const r=componentRenderers[mod.id];if(r) html+=r();});
+    document.getElementById('homeModules').innerHTML=html;
+    document.getElementById('footerTag').innerHTML=`${CONFIG.storeName} · 碰一碰 NFC 智能拓客`;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    if(tab==='home'){document.getElementById('homePage').classList.add('active');document.querySelector('.nav-item[data-tab="home"]').classList.add('active');}
+    else if(tab==='order'){document.getElementById('orderPage').classList.add('active');document.querySelector('.nav-item[data-tab="order"]').classList.add('active');renderOrderPage();}
+    else if(tab==='profile'){document.getElementById('profilePage').classList.add('active');document.querySelector('.nav-item[data-tab="profile"]').classList.add('active');document.getElementById('profileStoreName').textContent=CONFIG.storeName;}
+}
+
+const CONTENT_CACHE={xiaohongshu:[],dianping:[],meituan:[],douyin:[],wechat_moments:[],lastUpdate:null};
+async function preGenerateContent(){
+    if(CONTENT_CACHE.lastUpdate&&(Date.now()-CONTENT_CACHE.lastUpdate<600000)) return;
+    const mock={xiaohongshu:[{body:`🍺 ${CONFIG.storeName}探店！藏在${CONFIG.address||'附近'}的宝藏店～`,hashtags:'#探店 #种草'}],dianping:[{body:'环境：氛围感满分。\n口味：推荐招牌。\n服务：热情周到。',hashtags:''}],meituan:[{body:'团购套餐超划算，体验很棒！',hashtags:''}],douyin:[{body:`${CONFIG.storeName}，值得打卡！`,hashtags:''}],wechat_moments:[{body:`在${CONFIG.storeName}的快乐时刻🥂`,hashtags:''}]};
+    Object.keys(mock).forEach(k=>CONTENT_CACHE[k]=[...mock[k]]);
+    CONTENT_CACHE.lastUpdate=Date.now();
+}
+function getCachedContent(platform){const pool=CONTENT_CACHE[platform];if(pool&&pool.length>0){const c=pool.shift();pool.push(c);return c;}return null;}
+let hasJumped=false,lotteryUsed=false;
+async function seamlessJump(platform){
+    hasJumped=true;
+    let content=getCachedContent(platform)||{body:`在${CONFIG.storeName}的体验很棒！`,hashtags:''};
+    const text=(content.body||'')+(content.hashtags?'\n\n'+content.hashtags:'');
+    try{await navigator.clipboard.writeText(text);}catch(e){}
+    if(navigator.vibrate) navigator.vibrate(10);
+    const scheme=(CONFIG.platforms[platform]||{}).scheme;
+    if(scheme){window.location.href=scheme;setTimeout(()=>{if(document.visibilityState==='visible')showToast('请打开App粘贴发布 📲');},2000);}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&hasJumped){hasJumped=false;setTimeout(()=>{if(CONFIG.lottery&&CONFIG.lottery.enabled&&!lotteryUsed)showLotteryModal();else showToast('🙏 感谢支持！');},300);}});
+function showLotteryModal(){if(lotteryUsed)return;document.getElementById('lotteryOverlay').style.display='flex';}
+function closeLottery(){document.getElementById('lotteryOverlay').style.display='none';}
+function startLottery(){
+    if(lotteryUsed){showToast('已抽过奖啦~');return;}
+    const btn=document.getElementById('lotteryBtn');btn.disabled=true;btn.textContent='🎰 转起来...';
+    const prizes=(CONFIG.lottery||{}).prizes||[{name:'参与奖',desc:'谢谢参与',emoji:'🎁',weight:100,codePrefix:'THX'}];
+    const total=prizes.reduce((s,p)=>s+(p.weight||1),0);
+    let r=Math.random()*total,prize=prizes[prizes.length-1];
+    for(const p of prizes){r-=(p.weight||1);if(r<=0){prize=p;break;}}
+    const code=(prize.codePrefix||'P')+Math.random().toString(36).slice(2,10).toUpperCase();
+    document.getElementById('lotteryWheel').style.transform=`rotate(${(5+Math.floor(Math.random()*4))*360+Math.random()*360}deg)`;
+    setTimeout(()=>{
+        document.getElementById('lotteryOverlay').style.display='none';
+        document.getElementById('prizeEmoji').textContent=prize.emoji||'🎁';
+        document.getElementById('prizeTitle').textContent='恭喜获得：'+prize.name;
+        document.getElementById('prizeDesc').textContent=prize.desc||'';
+        document.getElementById('prizeCode').textContent=code;
+        document.getElementById('prizeOverlay').style.display='flex';
+        lotteryUsed=true;document.getElementById('lotteryHint').textContent='奖品已发放';
+        const records=JSON.parse(localStorage.getItem('lottery_records')||'[]');
+        records.push({code,prize:prize.name,time:new Date().toISOString(),store:STORE_ID});
+        localStorage.setItem('lottery_records',JSON.stringify(records));
+    },4200);
+}
+function closePrize(){document.getElementById('prizeOverlay').style.display='none';}
+
+let cart=[],currentCategory='all';
+function renderOrderPage(){
+    document.getElementById('categoryBar').innerHTML=[['all','全部'],['beer','🍺 精酿'],['snack','🍗 小吃'],['set','🍱 套餐']].map(([k,v])=>`<div class="order-category ${k===currentCategory?'active':''}" onclick="setCategory('${k}')">${v}</div>`).join('');
+    const items=CONFIG.menu.filter(i=>i.enabled!==false&&(currentCategory==='all'||i.category===currentCategory));
+    document.getElementById('menuList').innerHTML=items.map(i=>`<div class="menu-item"><div class="menu-item-img">${i.emoji||'🍺'}</div><div class="menu-item-info"><div class="menu-item-name">${i.name}</div><div class="menu-item-desc">${i.desc||''}</div><div class="menu-item-price">¥${i.price}</div></div><button class="add-btn" onclick="addToCart(${i.id})">＋</button></div>`).join('');
+    updateCartBar();
+}
+function setCategory(cat){currentCategory=cat;renderOrderPage();}
+function addToCart(id){const item=CONFIG.menu.find(i=>i.id===id);if(!item)return;const existing=cart.find(c=>c.id===id);if(existing)existing.qty++;else cart.push({...item,qty:1});updateCartBar();showToast(`已添加 ${item.name}`);}
+function updateCartBar(){const totalQty=cart.reduce((s,i)=>s+i.qty,0),totalPrice=cart.reduce((s,i)=>s+i.price*i.qty,0);document.getElementById('cartCount').textContent=totalQty;document.getElementById('cartTotal').textContent='¥'+totalPrice.toFixed(0);document.getElementById('cartBar').style.display=totalQty>0?'flex':'none';}
+function submitOrder(){if(cart.length===0)return;const total=cart.reduce((s,i)=>s+i.price*i.qty,0);const mode=confirm('"确定"=堂食，"取消"=外送')?'堂食':'外送';const order={id:'ORD'+Date.now(),items:[...cart],total,mode,time:new Date().toISOString(),status:'已下单',storeId:STORE_ID};const orders=JSON.parse(localStorage.getItem('orders')||'[]');orders.unshift(order);localStorage.setItem('orders',JSON.stringify(orders));cart=[];updateCartBar();renderOrderPage();showToast(`✅ 下单成功！${mode} ¥${total}`);}
+function showMyOrders(){const container=document.getElementById('profileDetailContainer');const orders=JSON.parse(localStorage.getItem('orders')||'[]').filter(o=>o.storeId===STORE_ID||!o.storeId);container.innerHTML=orders.length===0?'<p style="text-align:center;color:#888;">暂无订单</p>':orders.slice(0,10).map(o=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${o.id}</b> | ${o.status}<br>${o.items.map(i=>i.name+'x'+i.qty).join(', ')}<br>¥${o.total} | ${o.mode}</div>`).join('');container.style.display='block';}
+function showLotteryHistory(){const container=document.getElementById('profileDetailContainer');const records=JSON.parse(localStorage.getItem('lottery_records')||'[]').filter(r=>r.store===STORE_ID);container.innerHTML=records.length===0?'<p style="text-align:center;color:#888;">暂无记录</p>':records.map(r=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${r.prize}</b><br>${r.code}<br><small>${new Date(r.time).toLocaleString()}</small></div>`).join('');container.style.display='block';}
+
+function callPhone(){window.location.href='tel:'+CONFIG.phone;}
+function addWechat(){navigator.clipboard.writeText(CONFIG.wechatId).catch(()=>{});window.location.href='weixin://';setTimeout(()=>showToast('微信号已复制：'+CONFIG.wechatId),500);}
+function connectWifi(){navigator.clipboard.writeText(CONFIG.wifiPassword).catch(()=>{});showToast('WiFi密码已复制\n网络：'+CONFIG.wifiSSID);setTimeout(()=>{if(confirm('📶 已连接WiFi！\n\n🎁 领取新客优惠券'))showToast('优惠券已发放');},1500);}
+function openFollow(platform,id){const schemes={douyin:'snssdk1128://',xiaohongshu:'xhsdiscover://',kuaishou:'kwai://'};if(schemes[platform])window.location.href=schemes[platform];else showToast('请打开'+platform+'搜索关注');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2500);}
+
+document.addEventListener('DOMContentLoaded',()=>{renderHome();const recs=JSON.parse(localStorage.getItem('lottery_records')||'[]').filter(r=>r.store===STORE_ID);if(recs.length>0)lotteryUsed=true;setTimeout(preGenerateContent,1000);console.log('🍺 动态NFC页面已就绪 | 门店:',STORE_ID,CONFIG.storeName);});
+</script>
+</body>
+</html>
