@@ -185,22 +185,33 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ====================== Supabase 初始化 ======================
+const SUPABASE_URL = 'https://mzgflippzzxwebupjzlzs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dq3sJguGvhlY-Fct1YlaSA_NBEM8mUe';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // ====================== 门店配置加载 ======================
 function getStoreId() { const p = new URLSearchParams(window.location.search); return p.get('id') || 'tongfeng001'; }
 const STORE_ID = getStoreId();
-const CONFIG_KEY = 'storeConfig_' + STORE_ID;
 
-function loadConfig() {
-    // 自动初始化数据，防止空数据
-    if (!localStorage.getItem(CONFIG_KEY)) {
-        const defaultCfg = getDefaultConfig();
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(defaultCfg));
-        localStorage.setItem('storeConfig', JSON.stringify(defaultCfg));
+// 从 Supabase 加载配置
+async function loadConfig() {
+    const { data, error } = await supabase
+        .from('store_configs')
+        .select('config')
+        .eq('id', STORE_ID)
+        .single();
+    
+    if (data && data.config) {
+        return data.config;
     }
-    let cfg = localStorage.getItem(CONFIG_KEY);
-    if (cfg) return JSON.parse(cfg);
-    return getDefaultConfig();
+    
+    // 如果云端没有，初始化默认配置
+    const defaultCfg = getDefaultConfig();
+    await supabase.from('store_configs').upsert({ id: STORE_ID, config: defaultCfg });
+    return defaultCfg;
 }
 
 function getDefaultConfig() {
@@ -242,8 +253,25 @@ function getDefaultConfig() {
     };
 }
 
-const CONFIG = loadConfig();
-document.title = CONFIG.storeName + ' · 碰一碰';
+// ====================== 初始化 ======================
+let CONFIG = getDefaultConfig();
+
+async function initApp() {
+    CONFIG = await loadConfig();
+    document.title = CONFIG.storeName + ' · 碰一碰';
+    applyTheme();
+    renderHome();
+    
+    // 检查抽奖记录
+    const { data: records } = await supabase
+        .from('lottery_records')
+        .select('*')
+        .eq('store_id', STORE_ID);
+    if (records && records.length > 0) lotteryUsed = true;
+    
+    setTimeout(preGenerateContent, 1000);
+    console.log('🍺 动态NFC页面已就绪 | 门店:', STORE_ID, CONFIG.storeName);
+}
 
 function applyTheme() {
     const l = CONFIG.layout || {};
@@ -256,16 +284,11 @@ function applyTheme() {
     r.setProperty('--bg-image', l.bgImage ? `url(${l.bgImage})` : 'none');
     r.setProperty('--bg-overlay', (l.bgOpacity || 0.15).toString());
 }
-applyTheme();
 
 const componentRenderers = {
     header:()=>{
         const c=CONFIG;
         return `<div class="header"><span class="brand-icon">${c.brandIcon||'🍺'}</span><h1 class="brand-name">${c.storeName}</h1><p class="brand-tagline">${c.brandTagline||''}</p><div class="brand-labels">${(c.brandLabels||[]).map(l=>`<span class="brand-label">${l}</span>`).join('')}</div></div><div class="greeting">欢迎来到<span class="accent">${c.storeName}</span> 🥂<br>碰一碰，分享美好时刻</div>`;
-    },
-    video:()=>{
-        if(!CONFIG.videoUrl) return '';
-        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(0,0,0,0.05);">🎬</div><div><div class="section-title">探店视频</div></div></div><div class="video-card" onclick="seamlessJump('douyin')"><video src="${CONFIG.videoUrl}" muted></video><div class="video-play-btn">▶</div></div><button class="lottery-btn" style="width:100%;margin-top:10px;" onclick="seamlessJump('douyin')">📤 发视频</button></div>`;
     },
     platforms:()=>{
         const platforms=CONFIG.platforms||{};
@@ -273,12 +296,6 @@ const componentRenderers = {
         if(!entries.length) return '';
         const colors={xiaohongshu:'#ff2442',dianping:'#ff6633',meituan:'#ffd100',douyin:'#000',gaode:'#4285f4',ctrip:'#2577e6',kuaishou:'#ff5000',wechat_moments:'#5b9bd5'};
         return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(196,30,58,0.07);">📝</div><div><div class="section-title">发笔记 · 写评价</div><div class="section-subtitle">AI智能生成，一键发布</div></div></div><div class="btn-grid">${entries.map(([k,p])=>`<div class="platform-btn" data-platform="${k}" onclick="seamlessJump('${k}')"><div class="p-icon" style="background:${colors[k]||'#888'};">${p.icon||k[0]}</div><div class="p-info"><div class="p-name">${p.name}</div><div class="p-desc">${p.desc||''}</div></div><span class="p-spark">✨</span></div>`).join('')}</div></div>`;
-    },
-    follow:()=>{
-        const accounts=CONFIG.followAccounts||[];
-        if(!accounts.length) return '';
-        const names={douyin:'抖音',xiaohongshu:'小红书',kuaishou:'快手',wechat:'公众号'};
-        return `<div class="section-card"><div class="section-header"><div class="section-icon" style="background:rgba(66,133,244,0.07);">➕</div><div><div class="section-title">关注我们</div></div></div><div class="follow-grid">${accounts.map(a=>`<div class="follow-item" onclick="openFollow('${a.platform}','${a.accountId||''}')"><span style="font-size:28px;">${a.emoji||'📱'}</span><span style="font-size:12px;font-weight:600;">${names[a.platform]||a.platform}</span></div>`).join('')}</div></div>`;
     },
     collect:()=>{
         const platforms=CONFIG.collectPlatforms||[];
@@ -345,7 +362,7 @@ function startLottery(){
     for(const p of prizes){r-=(p.weight||1);if(r<=0){prize=p;break;}}
     const code=(prize.codePrefix||'P')+Math.random().toString(36).slice(2,10).toUpperCase();
     document.getElementById('lotteryWheel').style.transform=`rotate(${(5+Math.floor(Math.random()*4))*360+Math.random()*360}deg)`;
-    setTimeout(()=>{
+    setTimeout(async ()=>{
         document.getElementById('lotteryOverlay').style.display='none';
         document.getElementById('prizeEmoji').textContent=prize.emoji||'🎁';
         document.getElementById('prizeTitle').textContent='恭喜获得：'+prize.name;
@@ -353,9 +370,8 @@ function startLottery(){
         document.getElementById('prizeCode').textContent=code;
         document.getElementById('prizeOverlay').style.display='flex';
         lotteryUsed=true;document.getElementById('lotteryHint').textContent='奖品已发放';
-        const records=JSON.parse(localStorage.getItem('lottery_records')||'[]');
-        records.push({code,prize:prize.name,time:new Date().toISOString(),store:STORE_ID});
-        localStorage.setItem('lottery_records',JSON.stringify(records));
+        // 保存到 Supabase
+        await supabase.from('lottery_records').insert({store_id:STORE_ID,code:code,prize:prize.name});
     },4200);
 }
 function closePrize(){document.getElementById('prizeOverlay').style.display='none';}
@@ -370,17 +386,34 @@ function renderOrderPage(){
 function setCategory(cat){currentCategory=cat;renderOrderPage();}
 function addToCart(id){const item=CONFIG.menu.find(i=>i.id===id);if(!item)return;const existing=cart.find(c=>c.id===id);if(existing)existing.qty++;else cart.push({...item,qty:1});updateCartBar();showToast(`已添加 ${item.name}`);}
 function updateCartBar(){const totalQty=cart.reduce((s,i)=>s+i.qty,0),totalPrice=cart.reduce((s,i)=>s+i.price*i.qty,0);document.getElementById('cartCount').textContent=totalQty;document.getElementById('cartTotal').textContent='¥'+totalPrice.toFixed(0);document.getElementById('cartBar').style.display=totalQty>0?'flex':'none';}
-function submitOrder(){if(cart.length===0)return;const total=cart.reduce((s,i)=>s+i.price*i.qty,0);const mode=confirm('"确定"=堂食，"取消"=外送')?'堂食':'外送';const order={id:'ORD'+Date.now(),items:[...cart],total,mode,time:new Date().toISOString(),status:'已下单',storeId:STORE_ID};const orders=JSON.parse(localStorage.getItem('orders')||'[]');orders.unshift(order);localStorage.setItem('orders',JSON.stringify(orders));cart=[];updateCartBar();renderOrderPage();showToast(`✅ 下单成功！${mode} ¥${total}`);}
-function showMyOrders(){const container=document.getElementById('profileDetailContainer');const orders=JSON.parse(localStorage.getItem('orders')||'[]').filter(o=>o.storeId===STORE_ID||!o.storeId);container.innerHTML=orders.length===0?'<p style="text-align:center;color:#888;">暂无订单</p>':orders.slice(0,10).map(o=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${o.id}</b> | ${o.status}<br>${o.items.map(i=>i.name+'x'+i.qty).join(', ')}<br>¥${o.total} | ${o.mode}</div>`).join('');container.style.display='block';}
-function showLotteryHistory(){const container=document.getElementById('profileDetailContainer');const records=JSON.parse(localStorage.getItem('lottery_records')||'[]').filter(r=>r.store===STORE_ID);container.innerHTML=records.length===0?'<p style="text-align:center;color:#888;">暂无记录</p>':records.map(r=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${r.prize}</b><br>${r.code}<br><small>${new Date(r.time).toLocaleString()}</small></div>`).join('');container.style.display='block';}
+async function submitOrder(){
+    if(cart.length===0)return;
+    const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+    const mode=confirm('"确定"=堂食，"取消"=外送')?'堂食':'外送';
+    const order={id:'ORD'+Date.now(),items:[...cart],total,mode,time:new Date().toISOString(),status:'已下单',storeId:STORE_ID};
+    await supabase.from('orders').insert(order);
+    cart=[];updateCartBar();renderOrderPage();showToast(`✅ 下单成功！${mode} ¥${total}`);
+}
+async function showMyOrders(){
+    const container=document.getElementById('profileDetailContainer');
+    const {data:orders}=await supabase.from('orders').select('*').eq('store_id',STORE_ID).order('created_at',{ascending:false}).limit(10);
+    container.innerHTML=(orders&&orders.length>0)?orders.map(o=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${o.id}</b> | ${o.status}<br>${(o.items||[]).map(i=>i.name+'x'+i.qty).join(', ')}<br>¥${o.total} | ${o.mode}</div>`).join(''):'<p style="text-align:center;color:#888;">暂无订单</p>';
+    container.style.display='block';
+}
+async function showLotteryHistory(){
+    const container=document.getElementById('profileDetailContainer');
+    const {data:records}=await supabase.from('lottery_records').select('*').eq('store_id',STORE_ID).order('created_at',{ascending:false}).limit(10);
+    container.innerHTML=(records&&records.length>0)?records.map(r=>`<div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;"><b>${r.prize}</b><br>${r.code}<br><small>${new Date(r.created_at).toLocaleString()}</small></div>`).join(''):'<p style="text-align:center;color:#888;">暂无记录</p>';
+    container.style.display='block';
+}
 
 function callPhone(){window.location.href='tel:'+CONFIG.phone;}
 function addWechat(){navigator.clipboard.writeText(CONFIG.wechatId).catch(()=>{});window.location.href='weixin://';setTimeout(()=>showToast('微信号已复制：'+CONFIG.wechatId),500);}
 function connectWifi(){navigator.clipboard.writeText(CONFIG.wifiPassword).catch(()=>{});showToast('WiFi密码已复制\n网络：'+CONFIG.wifiSSID);setTimeout(()=>{if(confirm('📶 已连接WiFi！\n\n🎁 领取新客优惠券'))showToast('优惠券已发放');},1500);}
-function openFollow(platform,id){const schemes={douyin:'snssdk1128://',xiaohongshu:'xhsdiscover://',kuaishou:'kwai://'};if(schemes[platform])window.location.href=schemes[platform];else showToast('请打开'+platform+'搜索关注');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2500);}
 
-document.addEventListener('DOMContentLoaded',()=>{renderHome();const recs=JSON.parse(localStorage.getItem('lottery_records')||'[]').filter(r=>r.store===STORE_ID);if(recs.length>0)lotteryUsed=true;setTimeout(preGenerateContent,1000);console.log('🍺 动态NFC页面已就绪 | 门店:',STORE_ID,CONFIG.storeName);});
+// 启动
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
